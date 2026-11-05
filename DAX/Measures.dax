@@ -1,0 +1,66 @@
+// =============================================================
+// Global Causes of Death Dashboard - DAX Measures
+// All measures live in the _Measures table
+// =============================================================
+
+// ---------- Core ----------
+Total Deaths =
+CALCULATE ( SUM ( Fact_Deaths[Deaths] ), Dim_Cause[Include_In_Total] = "Yes" )
+
+Population =
+SUM ( Country_Indicators[Population] )
+
+Deaths per 100k =
+DIVIDE ( [Total Deaths], [Population] ) * 100000
+
+% of Deaths =
+DIVIDE ( [Total Deaths], CALCULATE ( [Total Deaths], ALL ( Dim_Cause ) ) )
+
+Avg Life Expectancy =
+AVERAGE ( Country_Indicators[Life_Expectancy] )
+
+Avg Health Spend per Capita =
+AVERAGE ( Country_Indicators[Health_Exp_per_Capita_USD] )
+
+Avg GDP per Capita =
+AVERAGE ( Country_Indicators[GDP_per_Capita_USD] )
+
+Avg Water Access % =
+AVERAGE ( Country_Indicators[Basic_Water_Access_pct] )
+
+Communicable Deaths per 100k =
+CALCULATE ( [Deaths per 100k], Dim_Cause[Category_Short] = "Communicable" )
+
+// ---------- 1990 vs 2019 (Causes Deep-Dive page) ----------
+Deaths 1990 =
+CALCULATE ( [Total Deaths], REMOVEFILTERS ( Dim_Year ), Dim_Year[Year] = 1990 )
+
+Deaths 2019 =
+CALCULATE ( [Total Deaths], REMOVEFILTERS ( Dim_Year ), Dim_Year[Year] = 2019 )
+
+Change % 1990-2019 =
+DIVIDE ( [Deaths 2019] - [Deaths 1990], [Deaths 1990] )
+
+Change Color =
+IF ( [Change % 1990-2019] > 0, "#B2182B", "#4D9221" )
+
+// ---------- Country vs World page ----------
+Selected Country =
+SELECTEDVALUE ( Dim_Country[Country], "World" )
+
+World Deaths per 100k =
+CALCULATE ( [Deaths per 100k], REMOVEFILTERS ( Dim_Country ) )
+
+World Avg Life Expectancy =
+CALCULATE ( [Avg Life Expectancy], REMOVEFILTERS ( Dim_Country ) )
+
+World % of Deaths =
+CALCULATE ( [% of Deaths], REMOVEFILTERS ( Dim_Country ) )
+
+// ---------- Calculated table ----------
+// Dim_Year = DISTINCT ( Fact_Deaths[Year] )
+
+// ---------- Power Query conditional column (Dim_Country) ----------
+// Income_Order: Low income = 1, Lower middle income = 2,
+//               Upper middle income = 3, High income = 4, else 5
+// Used to sort Dim_Country[Income_Group] (Column tools > Sort by column)
